@@ -9,9 +9,10 @@
 
 , "devDependencies": {
     "flatiron": "0.2.x"
-  , "director": "1.0.x"
+  , "union":    "0.3.x"
   , "request":  "2.x.x"
-  , "vows":     ""
+  , "ecstatic": "0.1.x"
+  , "vows":     "0.6.x"
   }
 
 , "engines": { "node": "0.6.x"}
