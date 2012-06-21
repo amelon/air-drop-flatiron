@@ -1,0 +1,22 @@
+{
+  "name":         "air-drop-flatiron"
+, "version":      "0.0.1"
+, "author":       "Arnaud Mélon <paztaga@gmail.com>"
+, "description":  "air-drop for flatiron"
+, "maintainers":  [ "paztaga <paztaga@gmail.com>"]
+
+, "dependencies": { "air-drop":  "0.1.x" }
+
+, "devDependencies": {
+    "flatiron": "0.2.x"
+  , "director": "1.0.x"
+  , "request":  "2.x.x"
+  , "vows":     ""
+  }
+
+, "engines": { "node": "0.6.x"}
+
+, "scripts": { "test": "vows --spec"}
+
+, "main": "./air-drop-flatiron"
+}
