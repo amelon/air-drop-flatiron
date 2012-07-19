@@ -1,10 +1,12 @@
 var flatiron  = require('flatiron')
   , app       = flatiron.app
-  , AirDrop   = require('../air-drop-flatiron')
   , ecstatic  = require('ecstatic')
-  , package   = AirDrop('my-pack').require('public/js/a.js', {name: 'a'})
-                                  .require('public/js/b.js', {name: 'b'})
-                                  // .package().minimize().cache();
+  , AirDrop   = require('../air-drop-flatiron')
+  , package   = AirDrop('/my-pack.js')
+                  .include('public/js/a.js')
+                  .include('public/js/b.js')
+                  // .package()
+                  // .minimize().cache();
 
 
 app.use(flatiron.plugins.http, {

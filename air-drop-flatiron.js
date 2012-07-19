@@ -1,17 +1,18 @@
 var AirDrop     = require('air-drop')
+  , flatiron    = require('flatiron')
+  , app         = flatiron.app
   , Path        = AirDrop.Path
   , fs          = require('fs')
   , initialized = false
-  , packages    = []
-  , app;
+  , packages    = [];
 
 
 module.exports = AirDropFlatiron;
 
 
 //mimic AirDrop but dont use router
-function AirDropFlatiron(name) {
-  var package = AirDrop(name);
+function AirDropFlatiron(url) {
+  var package = AirDrop(url);
 
   //set route only if app.router already defined
   if (initialized) {
@@ -27,9 +28,6 @@ function AirDropFlatiron(name) {
 AirDropFlatiron.attach = function attach() {
   //add AirDrop to flatiron app
   this.AirDrop = AirDropFlatiron;
-
-  //initialize app during attach process (will be used in init to get router module)
-  app = this;
 }
 
 AirDropFlatiron.init = function init(done) {
@@ -47,82 +45,62 @@ AirDropFlatiron.init = function init(done) {
 }
 
 
-function deliverSource(req, res) {
+function deliverSource(req, res, is_css) {
   return function(err, data) {
+    var contentType;
     if(err) throw err;
-    res.setHeader("Content-Type", "application/javascript");
+    if (is_css) {
+      contentType = "text/css";
+    } else {
+      contentType = "application/javascript";
+    }
+    res.setHeader("Content-Type", contentType);
     res.write(data);
     res.end();
   };
+}
+
+
+function fetchCb(package, type, filepath) {
+  return function(cb) {
+    var path = new Path({type: type, path: filepath, isCss: package.isCss()});
+    package.readWrapFile(path, cb);
+  }
 }
 
 //make available air-drop routes to director router
 function setRoute(package, router) {
 
   var url = package.url.replace('.', '\\.')
-
-    // reg exp for router to match path.url+/require/filepath[/name]
-    //  eg:
-    //    AirDrop('my-pack').require('js/jquery-1.7.2.js', {name: 'jquery'})
-    //  need to support path
-    //      air-drop/my-pack.js/require/js%7Cjquery-1.7.2.js/jquery
-    // very bad regexp but some issues with director string regexp (@see https://github.com/flatiron/director/issues/59)
-    , reg_exp = "([\\w\\-\\.\\|]+)/?((\\w|.)*)";
+    , reg_exp = "([\\w\\-\\.\\|]+)"
+    , is_css = package.isCss();
 
 
   //duplicated (small adaptation) function from air-drop (@todo: refactoring?)
   router.get(url, function() {
-    var req = this.req
-      , res = this.res;
-
-    package.useCachedResult(package.packageName, package.source.bind(package), deliverSource(req, res));
+    package.useCachedResult(package.url, package.source.bind(package), deliverSource(this.req, this.res, is_css));
   });
   
 
   //duplicated (small adaptation) function from air-drop (@todo: refactoring?)
-  router.get(url + "/include/"+reg_exp, function(filepath, name) {
-    var req = this.req
-      , res = this.res
-      , filepath = filepath.replace(/\|/g, "/")
-      , key = package.packageName + "/include/" + filepath
-      , fetchFunc = function(cb) {
-          var path = new Path({type: "include", path: filepath});
-          readWrapFile(path, cb);
-        };
+  router.get(url + "/include/" + reg_exp, function(filepath) {
+    var filepath = filepath.replace(/\|/g, "/")
+      , key = package.url + "/include/" + filepath
+      , fetchFunc = fetchCb(package, 'include', filepath);
 
-    package.useCachedResult(key, fetchFunc, deliverSource(req, res));
+    package.useCachedResult(key, fetchFunc, deliverSource(this.req, this.res, is_css));
   });
 
+
   //duplicated (small adaptation) function from air-drop (@todo: refactoring?)
-  router.get(url + "/require/"+reg_exp, function(filepath, name) {
+  router.get(url + "/require/" + reg_exp, function(filepath, name) {
     var req = this.req
       , res = this.res
       , filepath = filepath.replace(/\|/g, "/")
       , key = package.packageName + "/require/" + filepath
-      , fetchFunc = function(cb) {
-          var path = new Path({type: "require", path: filepath, name: name});
-          readWrapFile(path, cb);
-        };
+      , fetchFunc = fetchCb(package, 'require', filepath);
 
-    package.useCachedResult(key, fetchFunc, deliverSource(req, res));
+    package.useCachedResult(key, fetchFunc, deliverSource(req, res, is_css));
   });
 
-}
-
-
-//duplicated (small adaptation) function from air-drop (@todo: refactoring|public?)
-function readWrapFile(path, cb) {
-  fs.readFile(path.path, function(err, data) {
-    if(err) { return cb(err); }
-    var compiler = path.compiler();
-    compiler(data.toString(), function(err, compiledData) {
-      if(err) { return cb(err); }
-      if(path.type === "require") {
-        cb(null, "require.define('" + path.moduleName() + "', function(require, module, exports) {\nrequire=hackRequire(require);\n" + compiledData + "\n});\n");
-      }
-      else {
-        cb(null, compiledData + "\n");
-      }
-    });
-  });
 }

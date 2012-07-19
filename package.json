@@ -1,23 +1,26 @@
 {
   "name":         "air-drop-flatiron"
-, "version":      "0.0.1"
+, "version":      "0.0.2"
 , "author":       "Arnaud Mélon <paztaga@gmail.com>"
 , "description":  "air-drop for flatiron"
 , "maintainers":  [ "paztaga <paztaga@gmail.com>"]
 
-, "dependencies": { "air-drop":  "0.1.x" }
-
-, "devDependencies": {
-    "flatiron": "0.2.x"
-  , "union":    "0.3.x"
-  , "request":  "2.x.x"
-  , "ecstatic": "0.1.x"
-  , "vows":     "0.6.x"
+, "dependencies": { 
+    "air-drop":  "0.2.x" 
+  , "flatiron":  "0.2.x"
+  , "union":     "0.3.x"
   }
 
-, "engines": { "node": "0.6.x"}
+, "devDependencies": {
+    "request":    "2.x.x"
+  , "ecstatic":   "0.1.x"
+  , "mocha":      "1.3.x"
+  , "expect.js":  "0.1.x"
+  }
 
-, "scripts": { "test": "vows --spec"}
+, "engines": { "node": "0.8.x"}
+
+, "scripts": { "test": "mocha"}
 
 , "main": "./air-drop-flatiron"
 }
